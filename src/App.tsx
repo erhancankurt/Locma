@@ -5,7 +5,7 @@ import { Close, LocationOn, ContentCopy } from '@mui/icons-material';
 import { useGeolocation } from './hooks/useGeolocation';
 import { LocationMap } from './components/LocationMap';
 import { db } from './firebase';
-import { collection, doc, setDoc, onSnapshot, query, where, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { generateRandomString } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css'
