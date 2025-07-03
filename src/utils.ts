@@ -9,15 +9,6 @@ export function generateRandomColor() {
   return colors[Math.floor(Math.random() * colors.length)];
 }
 
-// Rastgele takma ad üret
-export function generateRandomNickname() {
-  const names = [
-    'Kaktüs', 'Bulut', 'Martı', 'Deniz', 'Gölge', 'Kumru', 'Fırtına', 'Güneş',
-    'Kuzey', 'Yıldız', 'Çiçek', 'Rüzgar', 'Ada', 'Kırlangıç', 'Mavi', 'Kum',
-    'Kanyon', 'Kavak', 'Karpuz', 'Kumru', 'Kırlangıç', 'Kumru', 'Kum', 'Kumru'
-  ];
-  return names[Math.floor(Math.random() * names.length)] + Math.floor(100 + Math.random() * 900);
-}
 export function generateRandomString(length: number = 6): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';

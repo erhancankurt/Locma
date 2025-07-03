@@ -11,7 +11,6 @@ interface Location {
   photoURL?: string;
   displayName?: string;
   color?: string;
-  nickname?: string;
 }
 
 interface MapProps {
@@ -50,7 +49,7 @@ export function LocationMap({ locations, myLocation }: MapProps) {
       if (photoURL.startsWith('data:image')) return photoURL;
       return photoURL;
     }
-    const displayName = name || 'K';
+    const displayName = name || 'Kullanıcı';
     const bg = color ? color.replace('#', '') : '1976d2';
     return `https://ui-avatars.com/api/?background=${bg}&color=fff&name=${encodeURIComponent(displayName)}`;
   }
@@ -81,16 +80,16 @@ export function LocationMap({ locations, myLocation }: MapProps) {
         <Marker
           key={loc.id}
           position={[loc.lat, loc.lng]}
-          icon={createProfileIcon(loc.photoURL, loc.nickname || loc.displayName, loc.color)}
+          icon={createProfileIcon(loc.photoURL, loc.displayName, loc.color)}
         >
           <Popup>
             <div style={{display:'flex',flexDirection:'column',alignItems:'center',minWidth:100}}>
               <img
-                src={getAvatarSrc(loc.photoURL, loc.nickname || loc.displayName, loc.color)}
+                src={getAvatarSrc(loc.photoURL, loc.displayName, loc.color)}
                 alt="Profil"
                 style={{width:48,height:48,borderRadius:'50%',marginBottom:6,objectFit:'cover',boxShadow:'0 2px 8px #0002'}}
               />
-              <div style={{fontWeight:600}}>{loc.nickname || loc.displayName || 'Kullanıcı'}</div>
+              <div style={{fontWeight:600}}>{loc.displayName || 'Kullanıcı'}</div>
               <div style={{fontSize:12, color:'#888'}}>Son güncelleme: {new Date(loc.timestamp).toLocaleTimeString()}</div>
             </div>
           </Popup>

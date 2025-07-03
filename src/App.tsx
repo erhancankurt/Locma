@@ -6,7 +6,7 @@ import { useGeolocation } from './hooks/useGeolocation';
 import { LocationMap } from './components/LocationMap';
 import { db } from './firebase';
 import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
-import { generateRandomString, generateRandomColor, generateRandomNickname } from './utils';
+import { generateRandomString, generateRandomColor } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css'
 
@@ -31,7 +31,6 @@ function App() {
   const [photoURL, setPhotoURL] = useState('');
   const [userId, setUserId] = useState<string>('');
   const [color, setColor] = useState('');
-  const [nickname, setNickname] = useState('');
   const [shareDuration, setShareDuration] = useState(15); // dakika cinsinden, varsayılan 15
   const [shareEndTime, setShareEndTime] = useState<number | null>(null);
 
@@ -44,11 +43,10 @@ function App() {
     }
   }, []);
 
-  // userId, renk ve nickname'i localStorage'dan al veya oluştur
+  // userId ve rengi localStorage'dan al veya oluştur
   useEffect(() => {
     let uid = localStorage.getItem('linkmap_userId');
     let clr = localStorage.getItem('linkmap_color');
-    let nick = localStorage.getItem('linkmap_nickname');
     if (!uid) {
       uid = uuidv4();
       localStorage.setItem('linkmap_userId', uid);
@@ -57,13 +55,8 @@ function App() {
       clr = generateRandomColor();
       localStorage.setItem('linkmap_color', clr);
     }
-    if (!nick) {
-      nick = generateRandomNickname();
-      localStorage.setItem('linkmap_nickname', nick);
-    }
     setUserId(uid || '');
     setColor(clr || '');
-    setNickname(nick || '');
   }, []);
 
   // Konum paylaşma başlat
@@ -91,7 +84,8 @@ function App() {
 
   // Profil modalını ilk defa konum paylaşırken aç
   useEffect(() => {
-    if (groupId && (!displayName)) {
+    // Kullanıcı adı boşsa profil modalını aç
+    if (groupId && !localStorage.getItem('linkmap_displayName')) {
       setProfileOpen(true);
     }
   }, [groupId]);
@@ -110,15 +104,14 @@ function App() {
 
   // Profil kaydet
   const handleProfileSave = () => {
-    if (!displayName) return;
     setProfileOpen(false);
     // Kullanıcı adını localStorage'a kaydet
     localStorage.setItem('linkmap_displayName', displayName);
   };
 
-  // Kendi konumunu güncelle (ad, foto, renk, nickname ve paylaşım süresi ile birlikte)
+  // Kendi konumunu güncelle (ad, foto, renk ve paylaşım süresi ile birlikte)
   useEffect(() => {
-    if (!location || !groupId || !displayName || !userId) return;
+    if (!location || !groupId || !userId) return;
     // Paylaşım süresi kontrolü
     if (shareEndTime && Date.now() > shareEndTime) return;
     const updateLocation = async () => {
@@ -131,12 +124,11 @@ function App() {
         displayName,
         photoURL,
         userId,
-        color,
-        nickname
+        color
       });
     };
     updateLocation();
-  }, [location, groupId, displayName, photoURL, userId, color, nickname, shareEndTime]);
+  }, [location, groupId, displayName, photoURL, userId, color, shareEndTime]);
 
   // Paylaşım süresi bitince konumu sil
   useEffect(() => {
@@ -251,22 +243,15 @@ function App() {
               <input type="file" accept="image/*" hidden onChange={handlePhotoChange} />
             </Button>
             <TextField
-              label="Adınız"
+              label="Adınız (isteğe bağlı)"
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
               fullWidth
-              autoFocus
-            />
-            <TextField
-              label="Takma Ad (değiştirilebilir)"
-              value={nickname}
-              onChange={e => { setNickname(e.target.value); localStorage.setItem('linkmap_nickname', e.target.value); }}
-              fullWidth
             />
             <Box sx={{display:'flex',alignItems:'center',gap:2,mt:1}}>
-              <span>Renk:</span>
+              <span>Rastgele Renk:</span>
               <Box sx={{width:32,height:32,borderRadius:'50%',background:color,border:'2px solid #ccc'}} />
-              <Button size="small" onClick={()=>{const c=generateRandomColor();setColor(c);localStorage.setItem('linkmap_color',c);}}>Rastgele</Button>
+              <Button size="small" onClick={()=>{const c=generateRandomColor();setColor(c);localStorage.setItem('linkmap_color',c);}}>Yeni Renk</Button>
             </Box>
             <TextField
               label="Konum Paylaşım Süresi (dakika)"
@@ -283,7 +268,7 @@ function App() {
           <Button onClick={() => {
             setShareEndTime(Date.now() + shareDuration * 60 * 1000);
             handleProfileSave();
-          }} disabled={!displayName} variant="contained">Kaydet</Button>
+          }} variant="contained">Kaydet</Button>
         </DialogActions>
       </Dialog>
     </ThemeProvider>
