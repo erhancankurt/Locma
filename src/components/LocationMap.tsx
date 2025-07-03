@@ -19,11 +19,18 @@ interface MapProps {
 }
 
 
-function MapPanner({ center }: { center: [number, number] }) {
+
+// Tüm marker'ları kapsayacak şekilde haritayı otomatik uzaklaştıran bileşen
+function FitBounds({ locations, myLocation }: { locations: Location[]; myLocation?: { lat: number; lng: number } }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center);
-  }, [center, map]);
+    const bounds = L.latLngBounds([]);
+    locations.forEach(loc => bounds.extend([loc.lat, loc.lng]));
+    if (myLocation) bounds.extend([myLocation.lat, myLocation.lng]);
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    }
+  }, [locations, myLocation, map]);
   return null;
 }
 
@@ -71,7 +78,7 @@ export function LocationMap({ locations, myLocation }: MapProps) {
       zoom={15}
       style={{ height: '400px', width: '100%', borderRadius: '8px' }}
     >
-      <MapPanner center={center} />
+      <FitBounds locations={locations} myLocation={myLocation} />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
