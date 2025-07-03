@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect, useState } from 'react';
@@ -10,6 +10,8 @@ interface Location {
   timestamp: number;
   photoURL?: string;
   displayName?: string;
+  color?: string;
+  nickname?: string;
 }
 
 interface MapProps {
@@ -17,30 +19,49 @@ interface MapProps {
   myLocation?: { lat: number; lng: number };
 }
 
-export function LocationMap({ locations, myLocation }: MapProps) {
-  const [center, setCenter] = useState<[number, number]>([39.92077, 32.85411]); // Ankara merkez
 
+function MapPanner({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center);
+  }, [center, map]);
+  return null;
+}
+
+export function LocationMap({ locations, myLocation }: MapProps) {
+  // Sadece ilk render'da center belirle
+  const initialCenter: [number, number] = myLocation
+    ? [myLocation.lat, myLocation.lng]
+    : locations.length > 0
+    ? [locations[0].lat, locations[0].lng]
+    : [39.92077, 32.85411]; // Ankara merkez
+  const [center, setCenter] = useState<[number, number]>(initialCenter);
+
+  // Sadece myLocation değişirse haritayı oraya panner ile kaydır
   useEffect(() => {
     if (myLocation) {
       setCenter([myLocation.lat, myLocation.lng]);
     }
   }, [myLocation]);
 
-  // Eğer myLocation varsa, ilk render'da haritayı oraya odakla
-  useEffect(() => {
-    if (myLocation) {
-      setCenter([myLocation.lat, myLocation.lng]);
-    } else if (locations.length > 0) {
-      setCenter([locations[0].lat, locations[0].lng]);
-    }
-  }, []);
-
   // Marker üstünde profil fotoğrafı için custom icon
-  function createProfileIcon(photoURL?: string) {
+  function getAvatarSrc(photoURL?: string, name?: string, color?: string) {
+    if (photoURL) {
+      if (photoURL.startsWith('data:image')) return photoURL;
+      return photoURL;
+    }
+    const displayName = name || 'K';
+    const bg = color ? color.replace('#', '') : '1976d2';
+    return `https://ui-avatars.com/api/?background=${bg}&color=fff&name=${encodeURIComponent(displayName)}`;
+  }
+
+  function createProfileIcon(photoURL?: string, name?: string, color?: string) {
+    const src = getAvatarSrc(photoURL, name, color);
+    const borderColor = color || '#1976d2';
     return L.divIcon({
       className: '',
-      html: `<div style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;background:rgba(255,255,255,0.9);border-radius:50%;box-shadow:0 2px 8px #0002;overflow:hidden;border:2px solid #1976d2;">
-        <img src='${photoURL || "https://ui-avatars.com/api/?background=1976d2&color=fff&name=K"}' style='width:44px;height:44px;object-fit:cover;border-radius:50%;' />
+      html: `<div style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;background:rgba(255,255,255,0.9);border-radius:50%;box-shadow:0 2px 8px #0002;overflow:hidden;border:2px solid ${borderColor};">
+        <img src='${src}' style='width:44px;height:44px;object-fit:cover;border-radius:50%;' />
       </div>`
     });
   }
@@ -50,8 +71,8 @@ export function LocationMap({ locations, myLocation }: MapProps) {
       center={center}
       zoom={15}
       style={{ height: '400px', width: '100%', borderRadius: '8px' }}
-      key={center.join(',')}
     >
+      <MapPanner center={center} />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -60,12 +81,16 @@ export function LocationMap({ locations, myLocation }: MapProps) {
         <Marker
           key={loc.id}
           position={[loc.lat, loc.lng]}
-          icon={createProfileIcon(loc.photoURL)}
+          icon={createProfileIcon(loc.photoURL, loc.nickname || loc.displayName, loc.color)}
         >
           <Popup>
             <div style={{display:'flex',flexDirection:'column',alignItems:'center',minWidth:100}}>
-              {loc.photoURL && <img src={loc.photoURL} alt="Profil" style={{width:48,height:48,borderRadius:'50%',marginBottom:6,objectFit:'cover',boxShadow:'0 2px 8px #0002'}} />}
-              <div style={{fontWeight:600}}>{loc.displayName || 'Kullanıcı'}</div>
+              <img
+                src={getAvatarSrc(loc.photoURL, loc.nickname || loc.displayName, loc.color)}
+                alt="Profil"
+                style={{width:48,height:48,borderRadius:'50%',marginBottom:6,objectFit:'cover',boxShadow:'0 2px 8px #0002'}}
+              />
+              <div style={{fontWeight:600}}>{loc.nickname || loc.displayName || 'Kullanıcı'}</div>
               <div style={{fontSize:12, color:'#888'}}>Son güncelleme: {new Date(loc.timestamp).toLocaleTimeString()}</div>
             </div>
           </Popup>

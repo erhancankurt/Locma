@@ -6,7 +6,7 @@ import { useGeolocation } from './hooks/useGeolocation';
 import { LocationMap } from './components/LocationMap';
 import { db } from './firebase';
 import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
-import { generateRandomString } from './utils';
+import { generateRandomString, generateRandomColor, generateRandomNickname } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css'
 
@@ -30,6 +30,10 @@ function App() {
   const [displayName, setDisplayName] = useState('');
   const [photoURL, setPhotoURL] = useState('');
   const [userId, setUserId] = useState<string>('');
+  const [color, setColor] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [shareDuration, setShareDuration] = useState(15); // dakika cinsinden, varsayılan 15
+  const [shareEndTime, setShareEndTime] = useState<number | null>(null);
 
   // URL'den groupId al veya yeni oluştur
   useEffect(() => {
@@ -40,14 +44,26 @@ function App() {
     }
   }, []);
 
-  // userId'yi localStorage'dan al veya oluştur
+  // userId, renk ve nickname'i localStorage'dan al veya oluştur
   useEffect(() => {
     let uid = localStorage.getItem('linkmap_userId');
+    let clr = localStorage.getItem('linkmap_color');
+    let nick = localStorage.getItem('linkmap_nickname');
     if (!uid) {
       uid = uuidv4();
       localStorage.setItem('linkmap_userId', uid);
     }
+    if (!clr) {
+      clr = generateRandomColor();
+      localStorage.setItem('linkmap_color', clr);
+    }
+    if (!nick) {
+      nick = generateRandomNickname();
+      localStorage.setItem('linkmap_nickname', nick);
+    }
     setUserId(uid || '');
+    setColor(clr || '');
+    setNickname(nick || '');
   }, []);
 
   // Konum paylaşma başlat
@@ -75,27 +91,36 @@ function App() {
 
   // Profil modalını ilk defa konum paylaşırken aç
   useEffect(() => {
-    if (groupId && (!displayName || !photoURL)) {
+    if (groupId && (!displayName)) {
       setProfileOpen(true);
     }
   }, [groupId]);
 
-  // Fotoğraf seçildiğinde önizleme
+  // Fotoğraf seçildiğinde önizleme ve base64'e çevirme
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setPhotoURL(URL.createObjectURL(e.target.files[0]));
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoURL(reader.result as string); // base64 string
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   // Profil kaydet
   const handleProfileSave = () => {
-    if (!displayName || !photoURL) return;
+    if (!displayName) return;
     setProfileOpen(false);
+    // Kullanıcı adını localStorage'a kaydet
+    localStorage.setItem('linkmap_displayName', displayName);
   };
 
-  // Kendi konumunu güncelle (ad ve foto ile birlikte, userId ile tek doküman)
+  // Kendi konumunu güncelle (ad, foto, renk, nickname ve paylaşım süresi ile birlikte)
   useEffect(() => {
-    if (!location || !groupId || !displayName || !photoURL || !userId) return;
+    if (!location || !groupId || !displayName || !userId) return;
+    // Paylaşım süresi kontrolü
+    if (shareEndTime && Date.now() > shareEndTime) return;
     const updateLocation = async () => {
       const locRef = doc(db, 'locations', `${groupId}_${userId}`);
       await setDoc(locRef, {
@@ -105,11 +130,23 @@ function App() {
         timestamp: Date.now(),
         displayName,
         photoURL,
-        userId
+        userId,
+        color,
+        nickname
       });
     };
     updateLocation();
-  }, [location, groupId, displayName, photoURL, userId]);
+  }, [location, groupId, displayName, photoURL, userId, color, nickname, shareEndTime]);
+
+  // Paylaşım süresi bitince konumu sil
+  useEffect(() => {
+    if (!groupId || !userId || !shareEndTime) return;
+    if (Date.now() > shareEndTime) {
+      // Konumu sil
+      const locRef = doc(db, 'locations', `${groupId}_${userId}`);
+      setDoc(locRef, {}, { merge: false }); // Boş obje ile sil
+    }
+  }, [groupId, userId, shareEndTime]);
 
   // Link kopyala
   const copyLink = () => {
@@ -208,9 +245,9 @@ function App() {
         <DialogTitle>Profil Bilgileri</DialogTitle>
         <DialogContent>
           <Stack spacing={2} alignItems="center" sx={{mt:1}}>
-            <Avatar src={photoURL} sx={{width:64, height:64}}/>
+            <Avatar src={photoURL} sx={{width:64, height:64, bgcolor: color}}/>
             <Button variant="outlined" component="label">
-              Fotoğraf Yükle
+              Fotoğraf Yükle (isteğe bağlı)
               <input type="file" accept="image/*" hidden onChange={handlePhotoChange} />
             </Button>
             <TextField
@@ -220,10 +257,33 @@ function App() {
               fullWidth
               autoFocus
             />
+            <TextField
+              label="Takma Ad (değiştirilebilir)"
+              value={nickname}
+              onChange={e => { setNickname(e.target.value); localStorage.setItem('linkmap_nickname', e.target.value); }}
+              fullWidth
+            />
+            <Box sx={{display:'flex',alignItems:'center',gap:2,mt:1}}>
+              <span>Renk:</span>
+              <Box sx={{width:32,height:32,borderRadius:'50%',background:color,border:'2px solid #ccc'}} />
+              <Button size="small" onClick={()=>{const c=generateRandomColor();setColor(c);localStorage.setItem('linkmap_color',c);}}>Rastgele</Button>
+            </Box>
+            <TextField
+              label="Konum Paylaşım Süresi (dakika)"
+              type="number"
+              value={shareDuration}
+              onChange={e => setShareDuration(Number(e.target.value))}
+              inputProps={{min:1,max:180}}
+              fullWidth
+              helperText="Süre dolunca konum paylaşımı otomatik durur."
+            />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleProfileSave} disabled={!displayName || !photoURL} variant="contained">Kaydet</Button>
+          <Button onClick={() => {
+            setShareEndTime(Date.now() + shareDuration * 60 * 1000);
+            handleProfileSave();
+          }} disabled={!displayName} variant="contained">Kaydet</Button>
         </DialogActions>
       </Dialog>
     </ThemeProvider>
