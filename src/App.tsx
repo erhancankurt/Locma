@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Container, Box, Typography, Button, Snackbar, IconButton, AppBar, Toolbar, Card, Paper, Fade, Badge, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Avatar, Stack } from '@mui/material';
-import { Close, LocationOn, ContentCopy } from '@mui/icons-material';
+import { Close, LocationOn, Share as ShareIcon } from '@mui/icons-material';
 import { useGeolocation } from './hooks/useGeolocation';
 import { LocationMap } from './components/LocationMap';
 import { db } from './firebase';
@@ -140,11 +140,11 @@ function App() {
     }
   }, [groupId, userId, shareEndTime]);
 
-  // Link kopyala
-  const copyLink = () => {
+  // WhatsApp ile paylaş
+  const shareLink = () => {
     const url = `${window.location.origin}${window.location.pathname}?id=${groupId}`;
-    navigator.clipboard.writeText(url);
-    setSnackbar({open: true, message: 'Link kopyalandı!'});
+    const text = encodeURIComponent('Locma ile anlık konum paylaşımı: ' + url);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
   // Aktif kişi sayısı
@@ -185,12 +185,12 @@ function App() {
                 <Box>
                   <Card sx={{p:3, mb:3, boxShadow:2, borderRadius:3, display:'flex', alignItems:'center', gap:2, flexWrap:'wrap'}}>
                     <Button
-                      variant="outlined"
-                      startIcon={<ContentCopy />}
-                      onClick={copyLink}
-                      sx={{fontWeight:600, borderRadius:2}}
+                      variant="contained"
+                      startIcon={<ShareIcon />}
+                      onClick={shareLink}
+                      sx={{fontWeight:600, borderRadius:2, background:'#25D366', color:'#fff', '&:hover':{background:'#128C7E'}}}
                     >
-                      Linki Kopyala
+                      Paylaş
                     </Button>
                     <Badge badgeContent={uniqueUserCount} color="primary" sx={{ml:2}}>
                       <Typography variant="body1" color="text.secondary">
