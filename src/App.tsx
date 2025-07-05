@@ -164,7 +164,7 @@ function App() {
       <AppBar position="static" elevation={2} sx={{background: 'linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)'}}>
         <Toolbar>
           <LocationOn sx={{mr:1}} />
-          <Typography variant="h5" sx={{flexGrow:1, fontWeight:700, letterSpacing:1}}>LinkMap</Typography>
+          <Typography variant="h5" sx={{flexGrow:1, fontWeight:700, letterSpacing:1}}>Locma</Typography>
         </Toolbar>
       </AppBar>
       <Container maxWidth="sm" sx={{mt:6, mb:6}}>
@@ -185,6 +185,7 @@ function App() {
                   className="modern-btn"
                   startIcon={<LocationOn />}
                   onClick={startSharing}
+                  sx={{ color: '#fff' }}
                 >
                   Konum Paylaşmaya Başla
                 </Button>
