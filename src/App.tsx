@@ -163,41 +163,40 @@ function App() {
         <Fade in timeout={600}>
           <Box>
             {!groupId ? (
-              <Card sx={{p:5, textAlign:'center', boxShadow:3, borderRadius:4}}>
-                <Typography variant="h4" fontWeight={700} gutterBottom color="primary.main">
-                  Anlık Konum Paylaşımı
+              <div className="modern-card" style={{textAlign:'center'}}>
+                <Typography variant="h3" fontWeight={800} gutterBottom color="primary.main" sx={{letterSpacing:1.5, mb:2}}>
+                  Locma
                 </Typography>
-                <Typography variant="body1" color="text.secondary" paragraph sx={{mb:3}}>
-                  Arkadaşlarınla anlık konum paylaşmak için yeni bir grup oluştur ve linki paylaş. Üyelik gerekmez!
+                <Typography variant="h5" fontWeight={600} color="secondary" sx={{mb:2}}>
+                  Anlık, Üyelik Gerektirmeyen Grup Konum Paylaşımı
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph sx={{mb:3, fontSize:'1.1rem'}}>
+                  Arkadaşlarınla veya grubunla tek tıkla konum paylaş, herkesin anlık konumunu haritada gör. Üyelik, uygulama indirme veya karmaşık adımlar yok!
                 </Typography>
                 <Button
-                  variant="contained"
+                  className="modern-btn"
                   startIcon={<LocationOn />}
                   onClick={startSharing}
-                  size="large"
-                  sx={{fontWeight:600, px:4, py:1.5, fontSize:'1.1rem', borderRadius:3, boxShadow:2}}
                 >
                   Konum Paylaşmaya Başla
                 </Button>
-              </Card>
+              </div>
             ) : (
               <Fade in timeout={600}>
                 <Box>
-                  <Card sx={{p:3, mb:3, boxShadow:2, borderRadius:3, display:'flex', alignItems:'center', gap:2, flexWrap:'wrap'}}>
+                  <div className="modern-card" style={{display:'flex', alignItems:'center', gap:16, flexWrap:'wrap', justifyContent:'space-between', marginBottom:24}}>
                     <Button
-                      variant="contained"
+                      className="modern-btn"
                       startIcon={<ShareIcon />}
                       onClick={shareLink}
-                      sx={{fontWeight:600, borderRadius:2, background:'#25D366', color:'#fff', '&:hover':{background:'#128C7E'}}}
+                      style={{background:'#25D366', color:'#fff', minWidth:120}}
                     >
                       Paylaş
                     </Button>
-                    <Badge badgeContent={uniqueUserCount} color="primary" sx={{ml:2}}>
-                      <Typography variant="body1" color="text.secondary">
-                        Aktif Kişi
-                      </Typography>
-                    </Badge>
-                  </Card>
+                    <span className="modern-badge">
+                      <b>{uniqueUserCount}</b> Aktif Kişi
+                    </span>
+                  </div>
                   <Paper elevation={3} sx={{p:2, borderRadius:3, mb:2, background:'#f5faff'}}>
                     {error ? (
                       <Typography color="error" gutterBottom>
@@ -213,9 +212,6 @@ function App() {
                       />
                     )}
                   </Paper>
-                  <Typography variant="body2" color="text.secondary" mt={2} textAlign="center">
-                    Not: Konumlar 5 dakika boyunca güncellenmezse otomatik silinir.
-                  </Typography>
                 </Box>
               </Fade>
             )}

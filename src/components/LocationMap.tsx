@@ -20,17 +20,24 @@ interface MapProps {
 
 
 
-// Tüm marker'ları kapsayacak şekilde haritayı otomatik uzaklaştıran bileşen
+// Tüm marker'ları kapsayacak şekilde haritayı sadece kişi sayısı değişince otomatik uzaklaştıran bileşen
+import { useRef } from 'react';
 function FitBounds({ locations, myLocation }: { locations: Location[]; myLocation?: { lat: number; lng: number } }) {
   const map = useMap();
+  const prevCount = useRef<number>(0);
   useEffect(() => {
-    const bounds = L.latLngBounds([]);
-    locations.forEach(loc => bounds.extend([loc.lat, loc.lng]));
-    if (myLocation) bounds.extend([myLocation.lat, myLocation.lng]);
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    const count = locations.length + (myLocation ? 1 : 0);
+    if (count !== prevCount.current) {
+      const bounds = L.latLngBounds([]);
+      locations.forEach(loc => bounds.extend([loc.lat, loc.lng]));
+      if (myLocation) bounds.extend([myLocation.lat, myLocation.lng]);
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+      }
+      prevCount.current = count;
     }
-  }, [locations, myLocation, map]);
+    // eslint-disable-next-line
+  }, [locations.length, myLocation, map]);
   return null;
 }
 
