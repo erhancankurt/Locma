@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Container, Box, Typography, Button, Snackbar, IconButton, AppBar, Toolbar, Card, Paper, Fade, Badge, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Avatar, Stack } from '@mui/material';
+import { CssBaseline, Container, Box, Typography, Button, Snackbar, IconButton, AppBar, Toolbar, Paper, Fade, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Avatar, Stack } from '@mui/material';
 import { Close, LocationOn, Share as ShareIcon } from '@mui/icons-material';
 import { useGeolocation } from './hooks/useGeolocation';
 import { LocationMap } from './components/LocationMap';
+import { GroupChat } from './components/GroupChat';
 import { db } from './firebase';
 import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { generateRandomString, generateRandomColor } from './utils';
@@ -33,6 +34,7 @@ function App() {
   const [color, setColor] = useState('');
   const [shareDuration, setShareDuration] = useState(15); // dakika cinsinden, varsayılan 15
   const [shareEndTime, setShareEndTime] = useState<number | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // URL'den groupId al veya yeni oluştur
   useEffect(() => {
@@ -84,11 +86,17 @@ function App() {
 
   // Profil modalını ilk defa konum paylaşırken aç
   useEffect(() => {
-    // Kullanıcı adı boşsa profil modalını aç
-    if (groupId && !localStorage.getItem('linkmap_displayName')) {
+    // Profil yüklendiyse tekrar açma
+    if (!groupId) return;
+    const storedName = localStorage.getItem('linkmap_displayName') || '';
+    const storedPhoto = localStorage.getItem('linkmap_photoURL') || '';
+    setDisplayName(storedName);
+    setPhotoURL(storedPhoto);
+    if (!storedName && !profileLoaded) {
       setProfileOpen(true);
     }
-  }, [groupId]);
+    setProfileLoaded(true);
+  }, [groupId, profileLoaded]);
 
   // Fotoğraf seçildiğinde önizleme ve base64'e çevirme
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,8 +113,8 @@ function App() {
   // Profil kaydet
   const handleProfileSave = () => {
     setProfileOpen(false);
-    // Kullanıcı adını localStorage'a kaydet
     localStorage.setItem('linkmap_displayName', displayName);
+    localStorage.setItem('linkmap_photoURL', photoURL);
   };
 
   // Kendi konumunu güncelle (ad, foto, renk ve paylaşım süresi ile birlikte)
@@ -212,6 +220,13 @@ function App() {
                       />
                     )}
                   </Paper>
+                  {/* Grup Sohbeti */}
+                  <GroupChat
+                    groupId={groupId}
+                    userId={userId}
+                    displayName={displayName}
+                    photoURL={photoURL}
+                  />
                 </Box>
               </Fade>
             )}
