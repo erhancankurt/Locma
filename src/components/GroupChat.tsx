@@ -55,7 +55,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({ groupId, userId, displayNa
   };
 
   return (
-    <Paper elevation={2} sx={{ p: 2, borderRadius: 3, mb: 2, background: '#f5faff', maxHeight: 320, display: 'flex', flexDirection: 'column' }}>
+    <Paper elevation={2} sx={{ p: 2, borderRadius: 3, mb: 2, background: '#f5faff', maxHeight: 320, display: 'flex', flexDirection: 'column' }} data-testid="group-chat-paper">
       <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mb: 1 }}>
         Grup Sohbeti
       </Typography>
